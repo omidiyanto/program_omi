@@ -19,12 +19,6 @@ if [ "$1" == "start" ]; then
     done
 
     # NODE1
-    #nomor3 selinux
-    lab start netsecurity-ports
-    $sshnode1 "echo FILE1 > /var/www/html/file1"
-    $sshnode1 "echo FILE2 > /var/www/html/file2"
-    $sshnode1 "echo FILE3 > /var/www/html/file3"
-
     #nomor13 & 14 container
     CONTAINER_USER="neith"
     lab start containers-review
@@ -138,6 +132,14 @@ fi
     $sshnode1 "userdel -rf student"
     $sshnode1 "hostnamectl set-hostname localhost"
     $sshnode1 "nmcli con add con-name ensp106 type ethernet ifname eth0"
+
+    #nomor3 selinux
+    $sshnode1 "dnf install -y httpd"
+    $sshnode1 "echo FILE1 > /var/www/html/file1"
+    $sshnode1 "echo FILE2 > /var/www/html/file2"
+    $sshnode1 "echo FILE3 > /var/www/html/file3"
+#    $sshnode1 "semanage fcontext -a -t httpd_sys_content_t '/var/www/html(/.*)?'"
+#    $sshnode1 "restorecon -RFvv /var/www/html"
 
     #NODE2
     entries2="172.25.250.11 node1 node1.network250.example.com"
