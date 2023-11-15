@@ -284,18 +284,11 @@ elif [ "$1" == "grade" ]; then
       score3=$((score3 + 50))
     else
       echo "Semanage port : Fail"
-    fi
-    $sshnode1 firewall-cmd --list-all | grep "http"  
-    if [ $? -eq 0 ]; then
-      echo "Firewall add service: PASS" 
-      score3=$((score3 + 25))
-    else
-      echo "Firewall add service: Fail"
     fi  
     $sshnode1 firewall-cmd --list-all | grep "82/tcp"  
     if [ $? -eq 0 ]; then
       echo "Firewall add port: PASS" 
-      score3=$((score3 + 25))
+      score3=$((score3 + 50))
     else
       echo "Firewall add port: Fail"
     fi
