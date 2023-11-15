@@ -1,0 +1,697 @@
+#!/bin/bash
+sshnode1="ssh root@172.25.250.11"  #serverb
+sshnode2="ssh root@172.25.250.10"  #servera
+if [ "$1" == "start" ]; then 
+    echo "######### BOOTCAMP START ########"
+    #serverb
+    #nomor13 & 14 container
+    CONTAINER_USER="neith"
+    lab start containers-review
+    $sshnode1 "useradd $CONTAINER_USER"
+    $sshnode1 "echo redhat | passwd --stdin $CONTAINER_USER"
+    $sshnode1 "mkdir -p /home/$CONTAINER_USER/.config/containers"
+    $sshnode1 "chmod -R 770 /home/$CONTAINER_USER/.config/"
+    $sshnode1 "chown -R $CONTAINER_USER:$CONTAINER_USER /home/$CONTAINER_USER/.config/"
+    $sshnode1 "cp /tmp/registries.conf /home/$CONTAINER_USER/.config/containers/"
+    containerfile=$(cat <<'EOF'
+FROM registry.lab.example.com/ubi9-beta/ubi
+MAINTAINER nobody@redhat.com
+RUN dnf  config-manager  --add-repo "http://content/rhel9.0/x86_64/dvd/AppStream"
+RUN echo "gpgcheck=0" >> /etc/yum.repos.d/content_rhel9.0_x86_64_dvd_AppStream.repo
+RUN dnf  config-manager  --add-repo "http://content/rhel9.0/x86_64/dvd/BaseOS"
+RUN echo "gpgcheck=0" >> /etc/yum.repos.d/content_rhel9.0_x86_64_dvd_BaseOS.repo
+#COPY .repo/*   /etc/yum.repos.d/
+RUN dnf install -y ghostscript  enscript
+RUN mkdir /opt/incoming  
+RUN mkdir /opt/outgoing
+RUN echo "while true"  >> /usr/local/bin/ascii2pdf
+RUN echo "do"  >> /usr/local/bin/ascii2pdf
+RUN echo "CURRENT_DIR='/opt/incoming'"  >> /usr/local/bin/ascii2pdf
+RUN echo "#app=#(ls -Art1 datas | tail -n 1)"  >> /usr/local/bin/ascii2pdf
+RUN echo "text1 "  >> /usr/local/bin/ascii2pdf
+RUN echo "enscript /opt/incoming/-o - | ps2pdf - /opt/outgoing/.txt"  >> /usr/local/bin/ascii2pdf
+RUN echo "done"  >> /usr/local/bin/ascii2pdf
+RUN sed -i 's/text1/echo $FILE/g' /usr/local/bin/ascii2pdf
+RUN sed -i 's/-o/$FILE  -o/g'  /usr/local/bin/ascii2pdf
+RUN sed -i 's/.txt/$FILE/g'  /usr/local/bin/ascii2pdf
+RUN sed -i 's/#app=#/FILE=$/g'  /usr/local/bin/ascii2pdf
+RUN sed -i 's/datas/${CURRENT_DIR}/g'  /usr/local/bin/ascii2pdf
+RUN chmod 777 /usr/local/bin/ascii2pdf 
+CMD [ "/bin/bash", "-c", "/usr/local/bin/ascii2pdf" ]
+EOF
+)
+    echo "$containerfile" > /tmp/Containerfile
+    scp /tmp/Containerfile root@172.25.250.11:/bin/Containerfile
+    rm -rf /tmp/Containerfile
+    wgetfile='
+#!/bin/bash
+if [ "$1" == "https://classroom.example.com/Containerfile" ]; then
+    echo "--2023-11-10 19:43:55--  https://classroom.example.com/Containerfile
+Resolving classroom.example.com (classroom.example.com)... 185.199.108.133, 185.199.110.133, 185.199.111.133, ...
+Connecting to classroom.example.com (classroom.example.com)|185.199.108.133|:443... connected.
+HTTP request sent, awaiting response... 200 OK
+Length: 1347 (1.3K) [text/plain]
+Saving to: Containerfile
+
+    0K .                                                     100% 6.30M=0s
+    
+2023-11-10 19:43:56 (6.30 MB/s) - Containerfile saved [1347/1347]"
+    cp /bin/Containerfile .
+else
+    echo "wget failed, connection Refused"
+fi
+'
+    $sshnode1 "rm -rf /usr/bin/wget"
+    $sshnode1 "echo '$wgetfile' > /usr/bin/wget"
+    $sshnode1 "chmod a+x /usr/bin/wget"
+
+    #nomor6 autofs
+    lab start rhcsa-compreview3
+
+    #nomor12 archive
+    $sshnode1 "dnf remove -y bzip2 --skip-broken --nobest"
+
+    #nomor15.3 sudoers
+    $sshnode1 "rm -rf /etc/sudoers.d/*"
+    
+    #nomor1 networking
+    $sshnode1 "userdel -rf student"
+    $sshnode1 "hostnamectl set-hostname localhost"
+    $sshnode1 "nmcli con add con-name ensp106 type ethernet ifname eth0"
+
+    #nomor3 selinux
+    $sshnode1 "dnf install -y httpd"
+    $sshnode1 "echo FILE1 > /var/www/html/file1"
+    $sshnode1 "echo FILE2 > /var/www/html/file2"
+    $sshnode1 "echo FILE3 > /var/www/html/file3"
+
+    #servera    
+    #nomor6
+    $sshnode2 "tuned-adm profile virtual-host"
+
+    # nomor1 reset root password  
+    $sshnode2 "useradd sudouser"
+    $sshnode2 "echo redhat | passwd --stdin sudouser"
+    $sshnode2 "echo 'sudouser ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/user"
+    $sshnode2 "userdel -rf student"
+    lab start boot-resetting
+
+    # END CONNECTION WITH SERVERB & SERVERA
+    $sshnode1 "rm -rf /etc/yum.repos.d/*"
+    ssh sudouser@172.25.250.10 "sudo rm -rf /etc/yum.repos.d/*"
+    $sshnode1 "nmcli con modify 'Wired connection 1' ipv4.method manual ipv4.address 172.25.250.99/24 ipv4.gateway 172.25.250.254 ipv4.dns 172.25.250.254"
+    echo "(PRESS CTRL+C TO START)"
+    $sshnode1 "nmcli con up 'Wired connection 1'"
+    ssh root@172.25.250.99 "systemctl stop sshd"
+    $sshnode2 "systemctl stop sshd"
+    echo -e "\e[1;42;97m YOU ARE READY TO GO NOW !!! \e[0m"
+
+elif [ "$1" == "grade" ]; then
+    echo "######### BOOTCAMP GRADING ########"
+    #serverb
+    echo -e "\e[1;97;43m DO THIS IN SERVERB \e[0m"
+    #nomor1
+    HOSTNAME_SOAL="serverb.infinitelearning.lab.example.com"
+    IPADDR_SOAL="172.25.250.11/24"
+    IPGATE_SOAL="172.25.250.254"
+    IPDNS_SOAL="172.25.250.254"
+    score1=0
+    echo ""
+    echo "1. Configure Network Settings"
+    $sshnode1 "hostname | grep $HOSTNAME_SOAL"
+    if [ $? -eq 0 ]; then
+      echo "Hostname match"
+      score1=$((score1 + 10))
+    else
+      echo "Hostname wrong"
+    fi
+    active_profile=$($sshnode1 nmcli --fields NAME c s --active | grep -v NAME | sed -e 's/[[:space:]]*$//')
+    echo "Profile Connection Name = $active_profile"
+    if [ "$active_profile" != 'Wired connection 1' ]; then
+      $sshnode1 "nmcli con show '$active_profile' | grep 'ipv4.addresses:' | grep '$IPADDR_SOAL'"
+      if [ $? -eq 0 ]; then
+        echo "IP Addresses match"
+        score1=$((score1 + 15))
+      else
+        echo "Wrong IP Addresses"
+      fi
+      $sshnode1 "nmcli con show '$active_profile' | grep 'ipv4.gateway:' | grep '$IPGATE_SOAL'"
+      if [ $? -eq 0 ]; then
+        echo "IP Gateway match"
+        score1=$((score1 + 15))
+      else
+        echo "Wrong IP Gateway"
+      fi
+      $sshnode1 "nmcli con show '$active_profile' | grep 'ipv4.dns:' | grep '$IPDNS_SOAL'"
+      if [ $? -eq 0 ]; then
+        echo "IP DNS match"
+        score1=$((score1 + 10))
+      else
+        echo "Wrong IP DNS"
+      fi
+      $sshnode1 ping -c2 172.25.250.9 
+      if [ $? -eq 0 ]; then
+        echo "Able to Ping other server"  
+        score1=$((score1 + 50))
+      else
+        echo "Unable to Ping other server"
+    fi
+    else
+      echo "This mentee doesnt create new connection profile, he do nmcli con modify, so no score for this question"
+    fi
+    echo "NILAI NOMOR1 = ${score1}%"
+    echo ""
+
+    #nomor2
+    echo "2. Configure a Repository"
+    score2=0
+    appstream_url="http://classroom.example.com/content/rhel9.0/x86_64/dvd/AppStream"
+    baseos_url="http://classroom.example.com/content/rhel9.0/x86_64/dvd/BaseOS"
+    gpgcheck="gpgcheck=0"
+    repos_dir="/etc/yum.repos.d/"
+    $sshnode1 rm -rf /etc/yum.repos.d/rhel_dvd.repo
+    for repo_file in $($sshnode1 "ls '$repos_dir'/*"); do
+        if $sshnode1 [ -f "$repo_file" ]; then
+            if $sshnode1 grep -q "$appstream_url" "$repo_file" && $sshnode1 grep -q "$gpgcheck" "$repo_file"; then
+                echo "AppStream Repo: $repo_file"
+                score2=$((score2 + 50))
+            elif $sshnode1 grep -q "$baseos_url" "$repo_file" && $sshnode1 grep -q "$gpgcheck" "$repo_file"; then
+                echo "BaseOS Repo: $repo_file"
+                score2=$((score2 + 50))
+            else
+                echo "File $repo_file tidak memenuhi kriteria."
+            fi
+        fi
+    done
+    if [ $score2 -ge 100 ]; then
+        score2=100
+        echo "Configure Repository: PASS"
+    else
+        echo "Configure Repository: FAIL"
+    fi
+    echo "NILAI NOMOR2 = ${score2}%"
+    echo ""
+
+    # nomor3
+    echo "3. Selinux HTTPD Port"
+    score3=0
+    $sshnode1 semanage port -l | grep "^http_port_t" | grep 82 
+    if [ $? -eq 0 ]; then
+      echo "Semanage Port: PASS" 
+      score3=$((score3 + 50))
+    else
+      echo "Semanage port : Fail"
+    fi
+    $sshnode1 firewall-cmd --list-all | grep "82/tcp"  
+    if [ $? -eq 0 ]; then
+      echo "Firewall add port: PASS" 
+      score3=$((score3 + 50))
+    else
+      echo "Firewall add port: Fail"
+    fi
+    echo "NILAI NOMOR3 = ${score3}%"
+    echo ""
+
+    # nomor4
+    echo "4. Create the following users, groups and group memberships"
+    score4=0
+    GROUP_NAME="admin"
+    $sshnode1 "cat /etc/group | grep $GROUP_NAME | grep harry | grep natasha"
+    if [ $? -eq 0 ]; then
+      echo "Create Group $GROUP_NAME: PASS"  
+      score4=$((score4 + 25))
+    else
+      echo "Create Group $GROUP_NAME: Fail"
+    fi
+
+    $sshnode1 "cat /etc/group | grep $GROUP_NAME | grep natasha"
+    if [ $? -eq 0 ]; then
+      echo "Create user natasha: PASS" 
+      score4=$((score4 + 25))
+    else
+      echo "Create user natasha: Fail"
+    fi
+
+    $sshnode1 "cat /etc/group | grep $GROUP_NAME | grep harry"
+    if [ $? -eq 0 ]; then
+      echo "Create user harry: PASS" 
+      score4=$((score4 + 25))
+    else
+      echo "Create user harry: Fail"
+    fi
+
+    $sshnode1 "cat /etc/passwd | grep sarah | grep '/sbin/nologin'" 
+    if [ $? -eq 0 ]; then
+      echo "Create user sarah nologin: PASS"
+      score4=$((score4 + 25))
+    else
+      echo "Create user sarah nologin: Fail"
+    fi
+    echo "NILAI NOMOR4 = ${score4}%"
+    echo ""
+ 
+    #nomor 5
+    echo "5. Create a collaborative directory $COLLAB_DIR"
+    score5=0
+    COLLAB_DIR="/common/admin"
+    $sshnode1 ls -gd $COLLAB_DIR | grep $GROUP_NAME 
+    if [ $? -eq 0 ]; then
+      echo "Group ownership is $GROUP_NAME: PASS"
+      score5=$((score5 + 40))
+    else
+      echo "Group ownership is $GROUP_NAME: Fail"
+    fi
+
+    $sshnode1 ls -ld $COLLAB_DIR | grep drwxrws---  
+    if [ $? -eq 0 ]; then
+      echo "Directory Permissions: PASS" 
+      score5=$((score5 + 60))
+    else
+      echo "Directory Permissions: Fail"
+    fi
+    echo "NILAI NOMOR5 = ${score5}%"
+    echo ""   
+
+    #nomor6
+    echo "6. Autofs"
+    score6=0
+    user_autofs="production5"
+    homedir_user="/localhome/$user_autofs"
+    sshpass -p "redhat" ssh $user_autofs@172.25.250.11 exit
+    $sshnode1 "df -h | grep $homedir_user"
+    if [ $? -eq 0 ]; then
+      score6=$((score6 + 70))
+      echo "Autofs mount in $homedir_user"
+    else
+      echo "Autofs mount failed"
+    fi
+    sshpass -p "redhat" ssh $user_autofs@172.25.250.11 pwd | grep $homedir_user
+    if [ $? -eq 0 ]; then
+      score6=$((score6 + 30))
+      echo "correct homedir for $user_autofs in $homedir_user"
+    else
+      echo "wrong homedir for $user_autofs in $homedir_user"
+    fi
+    echo "NILAI NOMOR6 = ${score6}%"
+    echo "" 
+
+    #nomor7
+    echo "7. Crontab"
+    score7=0
+    CRONTAB_USER="natasha"
+    HOUR="*"
+    MINUTE="*/1"
+    COMMAND_SOAL=( "/bin/logger" "logger" )
+    ARGUMENT="hello"
+    ASTERISK="*"
+    cmd="crontab -lu $CRONTAB_USER"
+    if [[ "$($sshnode1 "$cmd" | awk '{print $1}')" == "$MINUTE" && "$($sshnode1 "$cmd" | awk '{print $2}')" == "$HOUR" && "$($sshnode1 "$cmd" | awk '{print $3}')" == "$ASTERISK" && "$($sshnode1 "$cmd" | awk '{print $4}')" == "$ASTERISK" && "$($sshnode1 "$cmd" | awk '{print $5}')" == "$ASTERISK" ]]; then
+      for com in "${COMMAND_SOAL[@]}"; do
+          if [[ "$($sshnode1 "$cmd" | awk '{print $6}')" == "$com" && $($sshnode1 "$cmd" | awk '{print $7}' | grep -q "$ARGUMENT"; echo $?) -eq 0 ]]; then
+              echo "Crontab: PASS"
+              score7=100
+          fi
+      done
+    else
+      echo "Crontab: FAIL"
+    fi
+    echo "NILAI NOMOR7 = ${score7}%"
+    echo ""
+
+    #nomor8
+    echo "8. NTP"
+    score8=0
+    NTP_SERVER="server classroom.example.com iburst"
+    $sshnode1 "cat /etc/chrony.conf | grep '${NTP_SERVER}'"
+    if [ $? -eq 0 ]; then
+      score8=100
+      echo "Configure NTP: PASS"
+    else
+      echo "Configure NTP: FAIL"
+    fi
+    echo "NILAI NOMOR8 = ${score8}%"
+    echo ""
+
+    #nomor9 
+    echo "9. Locate files and copy"
+    score9=0
+    USER_NOMOR9="sarah"
+    PATH_SOAL="/root/findresults"
+    line9=$($sshnode1 "ls -al '$PATH_SOAL' | grep '$USER_NOMOR9' | wc -l")
+    if [ $line9 -ge 4 ]; then
+      score9=100
+      echo "Locate and Copy: PASS"
+    else
+      echo "Locate and Copy: FAIL"
+    fi
+    echo "NILAI NOMOR9 = ${score9}%"
+    echo ""
+
+    #nomor10
+    echo "10. Find String"
+    score10=0
+    PATH_STRING="/root/search.txt"
+    STRING="/sbin/nologin"
+    line10=$($sshnode1 "cat '$PATH_STRING' | grep '$STRING' | wc -l")
+    if [ $line10 -ge 25 ]; then
+      score10=100
+      echo "Find string: PASS"
+    else
+      echo "Find string: FAIL"
+    fi
+    echo "NILAI NOMOR10 = ${score10}%"
+    echo ""
+
+    #nomor11
+    echo "11. Create a account"
+    score11=0
+    ACC_NOMOR11="aclan"
+    UID_NOMOR11="3895"
+    $sshnode1 "id -u '$ACC_NOMOR11' | grep '$UID_NOMOR11'"
+    if [ $? -eq 0 ]; then
+      echo "Create user account: PASS"
+      score11=100
+    else
+      echo "Create user account: Fail"
+    fi
+    echo "NILAI NOMOR11 = ${score11}%"
+    echo ""
+
+    #nomor12
+    echo "12. Create archive files"
+    score12=0
+    ARCHIVE_NAME="/root/archive.tar.bz2"
+    TYPE="bzip2"
+    $sshnode1 "file '$ARCHIVE_NAME' | grep '$TYPE'"
+    if [ $? -eq 0 ]; then
+      echo "Archive files: PASS"
+      score12=100
+    else
+      echo "Archive files: Fail"
+    fi
+    echo "NILAI NOMOR12 = ${score12}%"
+    echo ""
+
+    #nomor13
+    echo "13. Build Container Image"
+    score13=0
+    IMAGE_NAME="sushi"
+    CONTAINER_USER="neith"
+    sshpass -p "redhat" ssh $CONTAINER_USER@172.25.250.11 podman images | grep "$IMAGE_NAME"
+    if [ $? -eq 0 ]; then
+      echo "Build Container Image: PASS"
+      score13=100
+    else
+      echo "Build Container Image: Fail"
+    fi
+    echo "NILAI NOMOR13 = ${score13}%"
+    echo ""
+
+    #nomor14
+    echo "14. Configure Container as System Service"
+    score14=0
+    CONTAINER_NAME="pdfconverter"
+    CONTAINER_USER="neith"
+    sshpass -p "redhat" ssh $CONTAINER_USER@172.25.250.11 podman ps -a | grep $CONTAINER_NAME | grep -i up
+    if [ $? -eq 0 ]; then
+      echo "Configure Container is Up: PASS"
+      score14=$((score14 + 50))
+    else
+      echo "Configure Container is Up: Fail"
+    fi
+    sshpass -p "redhat" ssh $CONTAINER_USER@172.25.250.11 systemctl --user is-active container-${CONTAINER_NAME}.service | grep ^active 
+    if [ $? -eq 0 ]; then
+      echo "Configure Container is Running: PASS"
+      score14=$((score14 + 25))
+    else
+      echo "Configure Container is Running: Fail"
+    fi
+    sshpass -p "redhat" ssh $CONTAINER_USER@172.25.250.11 systemctl --user is-enabled container-${CONTAINER_NAME}.service | grep enable 
+    if [ $? -eq 0 ]; then
+      echo "Configure Container is Enable: PASS"
+      score14=$((score14 + 25))
+    else
+      echo "Configure Container is Enable: Fail"
+    fi
+    echo "NILAI NOMOR14 = ${score14}%"
+    echo ""
+
+    #nomor15.A
+    echo "15.A. Set the default Permissions"
+    score15A=0
+    UMASK_USERNAME="natasha"
+    $sshnode1 su - $UMASK_USERNAME -c 'umask' | grep 277 
+    if [ $? -eq 0 ]; then
+      echo "Default Permissions: PASS"
+      score15A=$((score15A + 100))
+    else
+      echo "Default Permissions: Fail"
+    fi
+    echo "NILAI NOMOR15.A = ${score15A}%"
+    echo ""
+    
+   #nomor15.B
+   echo "15.B. Set the Password expire date"
+   score15B=0
+   $sshnode1 cat /etc/login.defs | grep "PASS_MAX_DAYS" | grep 90
+   if [ $? -eq 0 ]; then
+     echo "Expire Password Configuration: PASS"
+     score15B=$((score15B+ 100))
+   else
+     echo "Expire Password Configuration: Fail"
+   fi
+   echo "NILAI NOMOR15.B = ${score15B}%"
+   echo ""
+
+   #nomor15.C
+   echo "15.C. Assign Sudo Privilege"
+   SUDO_GRP="admin"
+   score15C=0
+   sudoersfiles=($($sshnode1 "ls /etc/sudoers.d/*") /etc/sudoers)
+   for sudoersfile in "${sudoersfiles[@]}"; do
+      $sshnode1 "cat '$sudoersfile' | grep '%$SUDO_GRP' | grep 'NOPASSWD:'"
+      if [ $? -eq 0 ]; then
+         echo "This mentee do configuration in $sudoersfile"
+         score15C=100
+      fi
+   done
+   if [ $score8 -eq 0 ]; then
+     echo "Configure Sudoers for $SUDO_GRP Group: Fail"
+   else
+     echo "Configure Sudoers for $SUDO_GRP Group: PASS"
+   fi
+   echo "NILAI NOMOR15.C = ${score15C}%"
+   echo ""
+   
+   #nomor15.D
+   echo "15.D. Banner Login Message"
+   BANNER_USR="aclan"
+   MESSAGE="Welcome to Bootcamp" 
+   score15D=0
+   $sshnode1 su - $BANNER_USR -c "exit" | grep "$MESSAGE"
+   if [ $? -eq 0 ]; then
+      echo "Banner Login Message : PASS"
+      score15D=100
+   else
+      echo "Banner Login Message : Fail"
+   fi
+   echo "NILAI NOMOR15.D = ${score15D}%"
+   echo ""
+   
+   #nomor15.E
+   echo "15.E. Create script"
+   CP_SCRIPT_PATH="/root/found"
+   score15E=0
+   line15E=$($sshnode1 "ls -l '$CP_SCRIPT_PATH' | wc -l")
+   if [ $line15E -ge 26 ]; then
+      echo "Create Script : PASS"
+      score15E=100
+   else
+      echo "Create Script : Fail"
+   fi
+   echo "NILAI NOMOR15.E = ${score15E}%"
+   echo ""
+
+   #servera
+   echo -e "\e[1;97;44m DO THIS IN SERVERA \e[0m"
+   #nomor1
+   echo "1. Reset Root Password"
+   score1_node2=0
+   ROOT_PASS="redhat"
+   $sshnode2 "useradd passtester"
+   $sshnode2 "echo "redhat" | passwd --stdin passtester"
+   sshpass -p "redhat" ssh passtester@172.25.250.10 echo $ROOT_PASS | su - 
+   if [ $? -eq 0 ]; then
+      echo "Reset Root Password : PASS"
+      score1_node2=100
+   else
+      echo "Reset Root Password : Fail"
+   fi
+   $sshnode2 "userdel -rf passtester"
+   echo "NILAI NOMOR1 = ${score1_node2}%"
+   echo ""
+
+   #nomor2 
+    echo "2. Configure a Repository"
+    score2_node2=0
+    appstream_url="http://classroom.example.com/content/rhel9.0/x86_64/dvd/AppStream"
+    baseos_url="http://classroom.example.com/content/rhel9.0/x86_64/dvd/BaseOS"
+    gpgcheck="gpgcheck=0"
+    repos_dir="/etc/yum.repos.d/"
+    $sshnode2 rm -rf /etc/yum.repos.d/rhel_dvd.repo
+    for repo_file in $($sshnode2 "ls '$repos_dir'/*"); do
+        if $sshnode2 [ -f "$repo_file" ]; then
+            if $sshnode2 grep -q "$appstream_url" "$repo_file" && $sshnode2 grep -q "$gpgcheck" "$repo_file"; then
+                echo "AppStream Repo: $repo_file"
+                score2_node2=$((score2_node2 + 50))
+            elif $sshnode2 grep -q "$baseos_url" "$repo_file" && $sshnode2 grep -q "$gpgcheck" "$repo_file"; then
+                echo "BaseOS Repo: $repo_file"
+                score2_node2=$((score2_node2 + 50))
+            else
+                echo "File $repo_file tidak memenuhi kriteria."
+            fi
+        fi
+    done
+    if [ $score2_node2 -ge 100 ]; then
+        score2_node2=100
+        echo "Configure Repository: PASS"
+    else
+        echo "Configure Repository: FAIL"
+    fi
+    echo "NILAI NOMOR2 = ${score2_node2}%"
+    echo ""
+   
+   #nomor3
+   echo "3. Create & Resize LVM"
+   score3_node2=0
+   SIZE_RESIZE="320M"
+   $sshnode2 "lsblk --output=NAME,SIZE | grep myvg-vo | grep '$SIZE_RESIZE'"
+   if [ $? -eq 0 ]; then
+      echo "Resize LVM : PASS"
+      score3_node2=100
+   else
+      echo "Resize LVM : Fail"
+   fi
+   echo "NILAI NOMOR3 = ${score3_node2}%"
+   echo ""
+
+   #nomor4
+   echo "4. Create SWAP"
+   score4_node2=0
+   SIZE_SWAP="512M"
+   $sshnode2 "lsblk --output=NAME,SIZE,MOUNTPOINTS | grep SWAP | grep '$SIZE_SWAP'"
+   if [ $? -eq 0 ]; then
+      echo "Create SWAP : PASS"
+      score4_node2=100
+   else
+      echo "Create SWAP : Fail"
+   fi
+   echo "NILAI NOMOR4 = ${score4_node2}%"
+   echo ""
+   
+   #nomor5
+   echo "5. Create LV"
+   score5_node2=0
+   SIZE_LV="400M"
+   MOUNTPOINT_LV="/mnt/database"
+   $sshnode2 "lsblk --output=NAME,SIZE,MOUNTPOINTS | grep datastore-database | grep '$SIZE_LV' | grep '$MOUNTPOINT_LV'"
+   if [ $? -eq 0 ]; then
+      echo "Create LV : PASS"
+      score5_node2=100
+   else
+      echo "Create LV : Fail"
+   fi
+   echo "NILAI NOMOR5 = ${score5_node2}%"
+   echo ""
+
+   #nomor6
+   echo "6. Tuned Recommended Profile"
+   score6_node2=0
+   REC_PROFILE=$($sshnode2 "tuned-adm recommend")
+   $sshnode2 "tuned-adm active | grep '$REC_PROFILE'"
+   if [ $? -eq 0 ]; then
+      echo "Tuned Recommended : PASS"
+      score6_node2=100
+   else
+      echo "Tuned Recommended : Fail"
+   fi
+   echo "NILAI NOMOR6 = ${score6_node2}%"
+   echo ""
+   
+
+# TOTAL
+echo "##########################################################################"
+echo ""
+echo "NODE1:"
+echo "NILAI NOMOR 1  = ${score1}%"
+echo "NILAI NOMOR 2  = ${score2}%"
+echo "NILAI NOMOR 3  = ${score3}%"
+echo "NILAI NOMOR 4  = ${score4}%"
+echo "NILAI NOMOR 5  = ${score5}%"
+echo "NILAI NOMOR 6  = ${score6}%"
+echo "NILAI NOMOR 7  = ${score7}%"
+echo "NILAI NOMOR 8  = ${score8}%"
+echo "NILAI NOMOR 9  = ${score9}%"
+echo "NILAI NOMOR 10 = ${score10}%"
+echo "NILAI NOMOR 11  = ${score11}%"
+echo "NILAI NOMOR 12  = ${score12}%"
+echo "NILAI NOMOR 13  = ${score13}%"
+echo "NILAI NOMOR 14  = ${score14}%"
+echo "NILAI NOMOR 15.A  = ${score15A}%"
+echo "NILAI NOMOR 15.B  = ${score15B}%"
+echo "NILAI NOMOR 15.C  = ${score15C}%"
+echo "NILAI NOMOR 15.D  = ${score15D}%"
+echo "NILAI NOMOR 15.E  = ${score15E}%"
+echo ""
+echo "NODE2:"
+echo "NILAI NOMOR 1   = ${score1_node2}%"
+echo "NILAI NOMOR 2   = ${score2_node2}%"
+echo "NILAI NOMOR 3&4 = ${score3_node2}%"
+echo "NILAI NOMOR 5   = ${score4_node2}%"
+echo "NILAI NOMOR 6   = ${score5_node2}%"
+echo "NILAI NOMOR 7   = ${score6_node2}%"
+
+weighted_score1=$(echo "scale=2; $score1 * 0.10" | bc)
+weighted_score2=$(echo "scale=2; $score2 * 0.01" | bc)
+weighted_score3=$(echo "scale=2; $score3 * 0.08" | bc)
+weighted_score4=$(echo "scale=2; $score4 * 0.01" | bc)
+weighted_score5=$(echo "scale=2; $score5 * 0.01" | bc)
+weighted_score6=$(echo "scale=2; $score6 * 0.10" | bc)
+weighted_score7=$(echo "scale=2; $score7 * 0.01" | bc)
+weighted_score8=$(echo "scale=2; $score8 * 0.01" | bc)
+weighted_score9=$(echo "scale=2; $score9 * 0.02" | bc)
+weighted_score10=$(echo "scale=2; $score10 * 0.01" | bc)
+weighted_score11=$(echo "scale=2; $score11 * 0.01" | bc)
+weighted_score12=$(echo "scale=2; $score12 * 0.02" | bc)
+weighted_score13=$(echo "scale=2; $score13 * 0.05" | bc)
+weighted_score14=$(echo "scale=2; $score14 * 0.10" | bc)
+weighted_score15A=$(echo "scale=2; $score15A * 0.01" | bc)
+weighted_score15B=$(echo "scale=2; $score15B * 0.01" | bc)
+weighted_score15C=$(echo "scale=2; $score15C * 0.01" | bc)
+weighted_score15D=$(echo "scale=2; $score15D * 0.01" | bc)
+weighted_score15E=$(echo "scale=2; $score15E * 0.05" | bc)
+
+weighted_score1_node2=$(echo "scale=2; $score1_node2 * 0.10" | bc)
+weighted_score2_node2=$(echo "scale=2; $score2_node2 * 0.01" | bc)
+weighted_score3_node2=$(echo "scale=2; $score3_node2 * 0.10" | bc)
+weighted_score4_node2=$(echo "scale=2; $score4_node2 * 0.05" | bc)
+weighted_score5_node2=$(echo "scale=2; $score5_node2 * 0.10" | bc)
+weighted_score6_node2=$(echo "scale=2; $score6_node2 * 0.01" | bc)
+
+NILAI_TOTAL=$(echo "scale=2; $weighted_score1 + $weighted_score2 + $weighted_score3 + $weighted_score4 + $weighted_score5 + $weighted_score6 + $weighted_score7 + $weighted_score8 + $weighted_score9 + $weighted_score10 + $weighted_score11 + $weighted_score12 + $weighted_score13 + $weighted_score14 + $weighted_score15A + $weighted_score15B + $weighted_score15C + $weighted_score15D + $weighted_score15E + $weighted_score1_node2 + $weighted_score2_node2 + $weighted_score3_node2 + $weighted_score4_node2 + $weighted_score5_node2 + $weighted_score6_node2" | bc)
+
+predict=$(echo "scale=2; $NILAI_TOTAL * 3" | bc)
+echo ""
+echo "NILAI AKHIR = ${NILAI_TOTAL}%"
+echo "Predict Score = $predict"
+if [ $(echo "$NILAI_TOTAL >= 70" | bc -l) -eq 1 ]; then
+  echo -e "\e[1;42;97m YOU PASS THE BOOTCAMP DRILLS \e[0m"
+else
+  echo -e "\e[1;41;97m YOU FAIL THE BOOTCAMP DRILLS, DONT GIVE UP, TRY AGAIN \e[0m"
+fi
+echo ""
+echo "############################  FINISH  ####################################"
+
+else
+    echo "UNKNOWN ARGUMENT!!"
+fi
