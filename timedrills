@@ -8,7 +8,6 @@ if [ "$1" == "start" ]; then
     CONTAINER_USER="student"
     lab start containers-review
     $sshnode1 "useradd $CONTAINER_USER"
-    $sshnode1 "echo redhat | passwd --stdin $CONTAINER_USER"
     $sshnode1 "mkdir -p /home/$CONTAINER_USER/.config/containers"
     $sshnode1 "chmod -R 770 /home/$CONTAINER_USER/.config/"
     $sshnode1 "chown -R $CONTAINER_USER:$CONTAINER_USER /home/$CONTAINER_USER/.config/"
