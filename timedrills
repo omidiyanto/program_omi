@@ -652,7 +652,7 @@ weighted_score15E=$(echo "scale=2; $score15E * 0.05" | bc)
 weighted_score1_node2=$(echo "scale=2; $score1_node2 * 0.10" | bc)
 weighted_score2_node2=$(echo "scale=2; $score2_node2 * 0.01" | bc)
 weighted_score3_node2=$(echo "scale=2; $score3_node2 * 0.10" | bc)
-weighted_score4_node2=$(echo "scale=2; $score4_node2 * 0.05" | bc)
+weighted_score4_node2=$(echo "scale=2; $score4_node2 * 0.15" | bc)
 weighted_score6_node2=$(echo "scale=2; $score6_node2 * 0.01" | bc)
 
 NILAI_TOTAL=$(echo "scale=2; $weighted_score1 + $weighted_score2 + $weighted_score3 + $weighted_score4 + $weighted_score5 + $weighted_score6 + $weighted_score7 + $weighted_score8 + $weighted_score9 + $weighted_score10 + $weighted_score11 + $weighted_score12 + $weighted_score13 + $weighted_score14 + $weighted_score15A + $weighted_score15B + $weighted_score15C + $weighted_score15D + $weighted_score15E + $weighted_score1_node2 + $weighted_score2_node2 + $weighted_score3_node2 + $weighted_score4_node2 + $weighted_score6_node2" | bc)
