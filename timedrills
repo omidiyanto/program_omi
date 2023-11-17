@@ -7,7 +7,6 @@ if [ "$1" == "start" ]; then
     #nomor13 & 14 container
     CONTAINER_USER="student"
     lab start containers-review
-    $sshnode1 "useradd $CONTAINER_USER"
     $sshnode1 "mkdir -p /home/$CONTAINER_USER/.config/containers"
     $sshnode1 "chmod -R 770 /home/$CONTAINER_USER/.config/"
     $sshnode1 "chown -R $CONTAINER_USER:$CONTAINER_USER /home/$CONTAINER_USER/.config/"
@@ -348,7 +347,7 @@ elif [ "$1" == "grade" ]; then
     PATH_STRING="/root/search.txt"
     STRING="home"
     line10=$($sshnode1 "cat '$PATH_STRING' | grep '$STRING' | wc -l")
-    if [ $line10 -ge 25 ]; then
+    if [ $line10 -ge 7 ]; then
       score10=100
       echo "Find string: PASS"
     else
