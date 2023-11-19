@@ -439,7 +439,7 @@ elif [ "$1" == "grade" ]; then
     #nomor15.A
     echo "15.A. Set the default Permissions"
     score15A=0
-    UMASK_USERNAME="natasha"
+    UMASK_USERNAME="harry"
     $sshnode1 su - $UMASK_USERNAME -c 'umask' | grep 277 
     if [ $? -eq 0 ]; then
       echo "Default Permissions: PASS"
