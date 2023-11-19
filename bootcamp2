@@ -561,61 +561,46 @@ elif [ "$1" == "grade" ]; then
     echo "NILAI NOMOR2 = ${score2_node2}%"
     echo ""
    
-   #nomor3&4
-   echo "3&4. Create & Resize LVM"
+   #nomor3
+   echo "3. Create SWAP"
    score3_node2=0
-   SIZE_RESIZE="320M"
-   $sshnode2 "lsblk --output=NAME,SIZE | grep myvg-vo | grep '$SIZE_RESIZE'"
-   if [ $? -eq 0 ]; then
-      echo "Resize LVM : PASS"
-      score3_node2=100
-   else
-      echo "Resize LVM : Fail"
-   fi
-   echo "NILAI NOMOR3 = ${score3_node2}%"
-   echo ""
-
-   #nomor5
-   echo "5. Create SWAP"
-   score4_node2=0
    SIZE_SWAP="512M"
    $sshnode2 "lsblk --output=NAME,SIZE,MOUNTPOINTS | grep SWAP | grep '$SIZE_SWAP'"
    if [ $? -eq 0 ]; then
       echo "Create SWAP : PASS"
-      score4_node2=100
+      score3_node2=100
    else
       echo "Create SWAP : Fail"
    fi
-   echo "NILAI NOMOR5 = ${score5_node2}%"
+   echo "NILAI NOMOR3 = ${score3_node2}%"
+   echo ""
+
+   #nomor4 & 5
+   echo "4. Create & Resize LVM"
+   score4_node2=0
+   SIZE_RESIZE="800M"
+   $sshnode2 "lsblk --output=NAME,SIZE | grep datastore-database | grep '$SIZE_RESIZE'"
+   if [ $? -eq 0 ]; then
+      echo "Resize LVM : PASS"
+      score4_node2=100
+   else
+      echo "Resize LVM : Fail"
+   fi
+   echo "NILAI NOMOR4&5 = ${score4_node2}%"
    echo ""
    
    #nomor6
-   echo "6. Create LV"
+   echo "6. Tuned Recommended Profile"
    score6_node2=0
-   SIZE_LV="400M"
-   MOUNTPOINT_LV="/mnt/database"
-   $sshnode2 "lsblk --output=NAME,SIZE,MOUNTPOINTS | grep datastore-database | grep '$SIZE_LV' | grep '$MOUNTPOINT_LV'"
-   if [ $? -eq 0 ]; then
-      echo "Create LV : PASS"
-      score6_node2=100
-   else
-      echo "Create LV : Fail"
-   fi
-   echo "NILAI NOMOR6 = ${score6_node2}%"
-   echo ""
-
-   #nomor7
-   echo "7. Tuned Recommended Profile"
-   score7_node2=0
    REC_PROFILE=$($sshnode2 "tuned-adm recommend")
    $sshnode2 "tuned-adm active | grep '$REC_PROFILE'"
    if [ $? -eq 0 ]; then
       echo "Tuned Recommended : PASS"
-      score7_node2=100
+      score6_node2=100
    else
       echo "Tuned Recommended : Fail"
    fi
-   echo "NILAI NOMOR7 = ${score7_node2}%"
+   echo "NILAI NOMOR6 = ${score6_node2}%"
    echo ""
    
 
@@ -646,10 +631,9 @@ echo ""
 echo "NODE2:"
 echo "NILAI NOMOR 1   = ${score1_node2}%"
 echo "NILAI NOMOR 2   = ${score2_node2}%"
-echo "NILAI NOMOR 3&4 = ${score3_node2}%"
-echo "NILAI NOMOR 5   = ${score5_node2}%"
+echo "NILAI NOMOR 3   = ${score3_node2}%"
+echo "NILAI NOMOR 4&5 = ${score4_node2}%"
 echo "NILAI NOMOR 6   = ${score6_node2}%"
-echo "NILAI NOMOR 7   = ${score7_node2}%"
 
 weighted_score1=$(echo "scale=2; $score1 * 0.10" | bc)
 weighted_score2=$(echo "scale=2; $score2 * 0.01" | bc)
@@ -674,11 +658,10 @@ weighted_score15E=$(echo "scale=2; $score15E * 0.05" | bc)
 weighted_score1_node2=$(echo "scale=2; $score1_node2 * 0.10" | bc)
 weighted_score2_node2=$(echo "scale=2; $score2_node2 * 0.01" | bc)
 weighted_score3_node2=$(echo "scale=2; $score3_node2 * 0.10" | bc)
-weighted_score5_node2=$(echo "scale=2; $score5_node2 * 0.10" | bc)
+weighted_score4_node2=$(echo "scale=2; $score4_node2 * 0.15" | bc)
 weighted_score6_node2=$(echo "scale=2; $score6_node2 * 0.01" | bc)
-weighted_score7_node2=$(echo "scale=2; $score7_node2 * 0.01" | bc)
 
-NILAI_TOTAL=$(echo "scale=2; $weighted_score1 + $weighted_score2 + $weighted_score3 + $weighted_score4 + $weighted_score5 + $weighted_score6 + $weighted_score7 + $weighted_score8 + $weighted_score9 + $weighted_score10 + $weighted_score11 + $weighted_score12 + $weighted_score13 + $weighted_score14 + $weighted_score15A + $weighted_score15B + $weighted_score15C + $weighted_score15D + $weighted_score15E + $weighted_score1_node2 + $weighted_score2_node2 + $weighted_score3_node2 + $weighted_score5_node2 + $weighted_score6_node2 + $weighted_score7_node2" | bc)
+NILAI_TOTAL=$(echo "scale=2; $weighted_score1 + $weighted_score2 + $weighted_score3 + $weighted_score4 + $weighted_score5 + $weighted_score6 + $weighted_score7 + $weighted_score8 + $weighted_score9 + $weighted_score10 + $weighted_score11 + $weighted_score12 + $weighted_score13 + $weighted_score14 + $weighted_score15A + $weighted_score15B + $weighted_score15C + $weighted_score15D + $weighted_score15E + $weighted_score1_node2 + $weighted_score2_node2 + $weighted_score3_node2 + $weighted_score4_node2 + $weighted_score6_node2" | bc)
 
 predict=$(echo "scale=2; $NILAI_TOTAL * 3" | bc)
 echo ""
