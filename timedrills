@@ -292,7 +292,7 @@ elif [ "$1" == "grade" ]; then
     #nomor7
     echo "7. Crontab"
     score7=0
-    CRONTAB_USER="natasha"
+    CRONTAB_USER="harry"
     HOUR="12"
     MINUTE="30"
     COMMAND_SOAL=( "/bin/echo" "echo" )
