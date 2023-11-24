@@ -668,9 +668,9 @@ echo ""
 echo "NILAI AKHIR = ${NILAI_TOTAL}%"
 echo "Predict Score = $predict"
 if [ $(echo "$NILAI_TOTAL >= 70" | bc -l) -eq 1 ]; then
-  echo -e "\e[1;42;97m YOU PASS THE BOOTCAMP DRILLS \e[0m"
+  echo -e "\e[1;42;97m YOU PASS THE BOOTCAMP \e[0m"
 else
-  echo -e "\e[1;41;97m YOU FAIL THE BOOTCAMP DRILLS, DONT GIVE UP, TRY AGAIN \e[0m"
+  echo -e "\e[1;41;97m YOU FAIL THE BOOTCAMP, DONT GIVE UP, TRY AGAIN \e[0m"
 fi
 echo ""
 echo "############################  FINISH  ####################################"
