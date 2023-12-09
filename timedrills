@@ -1,4 +1,3 @@
-#!/bin/bash
 sshnode1="ssh root@172.25.250.11"  #serverb
 sshnode2="ssh root@172.25.250.10"  #servera
 if [ "$1" == "start" ]; then 
