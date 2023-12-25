@@ -3,6 +3,21 @@ sshnode1="ssh root@172.25.250.11"
 sshnode2="ssh root@172.25.250.10"
 if [ "$1" == "start" ]; then
     echo "######### BOOTCAMP START ########"
+
+    echo ""
+    echo "STARTING THE QUESTIONS ENVIRONMENT"
+    sudo dnf install container-tools -y &>/dev/null
+    sudo loginctl enable-linger root
+    sudo podman run -d --name client -p 3510:3510 docker.io/omidiyanto/rhcsa-exam:client
+    sudo mkdir /tmp/exam-output &>/dev/null
+    sudo chmod 777 /tmp/exam-output &>/dev/null
+    sudo podman run -d --name server -p 3000:3000 -v /tmp/exam-output:/usr/src/app/public:Z docker.io/omidiyanto/rhcsa-exam:server
+    sleep 5
+    curl http://localhost:3000
+    curl http://localhost:3510
+    echo ""
+    echo "EXAM QUESTIONS STARTING COMPLETE "
+
     # PREPARATION IN WORKSTATION
     declare -A entries=(
         ["172.25.250.11"]="node1 node1.network250.example.com"
@@ -116,6 +131,10 @@ fi
     $sshnode1 "chown -R remoteuser250:remoteuser250 $homedir_user"
     $sshnode1 "chmod 775 $homedir_user"    
 
+    #nomor8 NTP
+    $sshnode1 'mkdir /tmp/backup'
+    $sshnode1 'cp /etc/chrony.conf /tmp/backup/chrony.conf'
+
     #nomor9 locate & copy
     $sshnode1 "useradd julia"
     $sshnode1 "echo redhat | passwd --stdin julia"
@@ -123,6 +142,9 @@ fi
     #nomor12 archive
     $sshnode1 "dnf remove -y bzip2 --skip-broken --nobest" 2> /dev/null
 
+    #nomor15.2
+    $sshnode1 'cp /etc/login.defs /tmp/backup/login.defs'
+    
     #nomor15.3 sudoers
     GROUP_SUDO="elite"
     $sshnode1 "groupadd $GROUP_SUDO"
@@ -142,6 +164,8 @@ fi
 #    $sshnode1 "restorecon -RFvv /var/www/html"
 
     #NODE2
+    $sshnode2 'mkdir /tmp/backup'
+    $sshnode2 'cp /etc/fstab /tmp/backup/fstab'
     entries2="172.25.250.11 node1 node1.network250.example.com"
     if $sshnode2 "grep -q '$entries2' /etc/hosts"; then
         echo "$entries found in /etc/hosts"
@@ -560,7 +584,7 @@ elif [ "$1" == "grade" ]; then
          score15C=100
       fi
    done
-   if [ $score8 -eq 0 ]; then
+   if [ $score15C -eq 0 ]; then
      echo "Configure Sudoers for $SUDO_GRP Group: Fail"
    else
      echo "Configure Sudoers for $SUDO_GRP Group: PASS"
@@ -776,6 +800,98 @@ else
 fi
 echo ""
 echo "############################  FINISH  ####################################"
+
+elif [ "$1" == "finish" ]; then
+#nomor3
+$sshnode1 'rm -rf /var/www/html/*'
+$sshnode1 'dnf remove -y httpd'
+$sshnode1 'rm -rf /etc/httpd'
+
+#nomor4
+$sshnode1 'groupdel -f sharegrp'
+$sshnode1 'userdel -rf harry'
+$sshnode1 'userdel -rf natasha'
+$sshnode1 'userdel -rf sarah'
+
+#nomor5
+$sshnode1 'rm -rf /home/shared'
+
+#nomor6
+dir_export="/netdir/remoteuser250"
+homedir_user="/netdir/remoteuser250"
+$sshnode2 "systemctl disable --now nfs-server"
+$sshnode2 "dnf remove nfs-utils -y"
+$sshnode2 "firewall-cmd --permanent --remove-service=nfs"
+$sshnode2 "firewall-cmd --permanent --remove-service=mountd"
+$sshnode2 "firewall-cmd --permanent --remove-service=rpc-bind"
+$sshnode2 "firewall-cmd --reload"
+$sshnode2 "rm -rf $dir_export"
+$sshnode2 "userdel -rf remoteuser250"
+$sshnode1 "systemctl disable --now autofs"
+$sshnode1 "dnf remove -y autofs"
+$sshnode1 "userdel -rf remoteuser250"
+
+#nomor7
+$sshnode1 'crontab -ru natasha'
+
+#nomor8 
+$sshnode1 'rm -rf /etc/chrony.conf'
+$sshnode1 'cp /tmp/backup/chrony.conf /etc/chrony.conf'
+
+#nomor9,10,12
+$sshnode1 'rm -rf /root/*'
+
+#nomor11
+$sshnode1 'userdel -rf aclan'
+
+#nomor13 & 14
+CONTAINER_USER="neith"
+sshpass -p "redhat" ssh $CONTAINER_USER@172.25.250.11 "podman rm -af"
+sshpass -p "redhat" ssh $CONTAINER_USER@172.25.250.11 "podman rmi -af"
+$sshnode1 'rm -rf /home/$CONTAINER_USER/*'
+$sshnode1 'rm -rf /opt/*'
+$sshnode1 'userdel -rf $CONTAINER_USER'
+lab finish containers-review
+
+
+#nomor15.2 
+$sshnode1 'rm -rf /etc/login.defs'
+$sshnode1 'cp /tmp/backup/login.defs /etc/login.defs'
+
+#nomor15.3 
+$sshnode1 'rm -rf /etc/sudoers.d/*'
+
+#nomor15.5 
+$sshnode1 'rm -rf /usr/local/bin/newsearch'
+
+
+#NODE2
+#nomor 3,4,5
+MOUNT_POINT_RESIZE="/orders"
+VG_RESIZE="myvg"
+LV_NAME_RESIZE="vo"
+device="/dev/vdb"
+$sshnode2 "swapoff -a"
+$sshnode2 "umount $MOUNT_POINT_RESIZE"
+$sshnode2 "umount /mnt/engineering"
+$sshnode2 "lvremove /dev/$VG_RESIZE/$LV_NAME_RESIZE"
+$sshnode2 "lvremove /dev/development/engineering"
+$sshnode2 "vgremove $VG_RESIZE"
+$sshnode2 "vgremove development"
+$sshnode2 "rm -rf $MOUNT_POINT_RESIZE"
+$sshnode2 "rm -rf /mnt/*"
+$sshnode2 "parted -s $device mklabel gpt"
+
+#nomor1 
+lab finish boot-resetting
+
+#exam questions container
+sudo podman rm -af &>/dev/null
+sudo podman rmi -af &>/dev/null
+sudo dnf remove container-tools -y &>/dev/null
+sudo rm -rf /tmp/exam-output &>/dev/null
+echo ""
+echo -e "\e[1;42;97m BOOTCAMP DRILLS FINISHED \e[0m"
 
 else
     echo "UNKNOWN ARGUMENT!!"
