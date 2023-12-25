@@ -611,8 +611,8 @@ elif [ "$1" == "grade" ]; then
    echo "15.E. Create script"
    CP_SCRIPT_PATH="/root/myfiles"
    score15E=0
-   line15E=$($sshnode1 "ls -l '$CP_SCRIPT_PATH' | wc -l")
-   if [ $line15E -gt 8 ]; then
+   line15E=$($sshnode1 "cat '$CP_SCRIPT_PATH' | wc -l")
+   if [ $line15E -eq 8 ]; then
       echo "Create Script : PASS"
       score15E=100
    else
