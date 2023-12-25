@@ -864,6 +864,9 @@ $sshnode1 'rm -rf /etc/sudoers.d/*'
 #nomor15.5 
 $sshnode1 'rm -rf /usr/local/bin/newsearch'
 
+#nomor1
+$sshnode1 "nmcli con modify 'Wired connection 1' ipv4.method manual ipv4.address 172.25.250.9/24 ipv4.gateway 172.25.250.254 ipv4.dns 172.25.250.254"
+$sshnode1 "nmcli con up 'Wired connection 1'"
 
 #NODE2
 #nomor 3,4,5
@@ -884,6 +887,12 @@ $sshnode2 "parted -s $device mklabel gpt"
 
 #nomor1 
 lab finish boot-resetting
+
+#repos
+$sshnode1 'rm -rf /etc/yum.repos.d/*'
+$sshnode2 'rm -rf /etc/yum.repos.d/*'
+sudo scp /etc/yum.repos.d/* 172.25.250.10:/etc/yum.repos.d/
+sudo scp /etc/yum.repos.d/* 172.25.250.11:/etc/yum.repos.d/
 
 #exam questions container
 sudo podman rm -af &>/dev/null
