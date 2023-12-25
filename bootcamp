@@ -802,6 +802,12 @@ echo ""
 echo "############################  FINISH  ####################################"
 
 elif [ "$1" == "finish" ]; then
+#nomor1
+$sshnode1 "nmcli con modify 'Wired connection 1' ipv4.method manual ipv4.address 172.25.250.9/24 ipv4.gateway 172.25.250.254 ipv4.dns 172.25.250.254"
+$sshnode1 "nmcli con up 'Wired connection 1'"
+$sshnode1 "hostnamectl set-hostname serverb.lab.example.com"
+$sshnode2 "hostnamectl set-hostname servera.lab.example.com"
+
 #nomor3
 $sshnode1 'rm -rf /var/www/html/*'
 $sshnode1 'dnf remove -y httpd'
@@ -864,9 +870,6 @@ $sshnode1 'rm -rf /etc/sudoers.d/*'
 #nomor15.5 
 $sshnode1 'rm -rf /usr/local/bin/newsearch'
 
-#nomor1
-$sshnode1 "nmcli con modify 'Wired connection 1' ipv4.method manual ipv4.address 172.25.250.9/24 ipv4.gateway 172.25.250.254 ipv4.dns 172.25.250.254"
-$sshnode1 "nmcli con up 'Wired connection 1'"
 
 #NODE2
 #nomor 3,4,5
