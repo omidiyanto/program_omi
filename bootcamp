@@ -166,6 +166,7 @@ fi
     #NODE2
     $sshnode2 'mkdir /tmp/backup'
     $sshnode2 'cp /etc/fstab /tmp/backup/fstab'
+    $sshnode2 "cp /etc/ssh/sshd_config /tmp/backup/sshd_config"
     entries2="172.25.250.11 node1 node1.network250.example.com"
     if $sshnode2 "grep -q '$entries2' /etc/hosts"; then
         echo "$entries found in /etc/hosts"
@@ -206,6 +207,8 @@ fi
 
 
     # END CONNECTION WITH NODE1
+    $sshnode1 "mkdir /tmp/backup"
+    $sshnode1 "cp /etc/ssh/sshd_config /tmp/backup/sshd_config"
     $sshnode1 "rm -rf /etc/yum.repos.d/*"
     ssh sudouser@172.25.250.10 "sudo rm -rf /etc/yum.repos.d/*"
     $sshnode1 "nmcli con modify 'Wired connection 1' ipv4.method manual ipv4.address 172.25.250.99/24 ipv4.gateway 172.25.250.254 ipv4.dns 172.25.250.254"
