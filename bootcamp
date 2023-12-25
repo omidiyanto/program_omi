@@ -900,7 +900,15 @@ $sshnode2 'rm -rf /etc/yum.repos.d/*'
 sudo scp /etc/yum.repos.d/* 172.25.250.10:/etc/yum.repos.d/
 sudo scp /etc/yum.repos.d/* 172.25.250.11:/etc/yum.repos.d/
 
+#sshd
+$sshnode1 "rm -rf /etc/ssh/sshd_config"
+$sshnode1 "cp /tmp/backup/sshd_config /etc/ssh/sshd_config"
+$sshnode2 "rm -rf /etc/ssh/sshd_config"
+$sshnode2 "cp /tmp/backup/sshd_config /etc/ssh/sshd_config"
+
 #exam questions container
+$sshnode1 "rm -rf /tmp/backup"
+$sshnode2 "rm -rf /tmp/backup"
 sudo podman rm -af &>/dev/null
 sudo podman rmi -af &>/dev/null
 sudo dnf remove container-tools -y &>/dev/null
