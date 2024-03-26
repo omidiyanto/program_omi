@@ -3,20 +3,15 @@ sshnode1="ssh root@172.25.250.11"
 sshnode2="ssh root@172.25.250.10"
 if [ "$1" == "start" ]; then
     echo "######### BOOTCAMP START ########"
-
     echo ""
     echo "STARTING THE QUESTIONS ENVIRONMENT"
-    sudo dnf install container-tools -y &>/dev/null
-    sudo loginctl enable-linger root
-    sudo podman run -d --name client -p 3510:3510 docker.io/omidiyanto/rhcsa-exam:client
-    sudo mkdir /tmp/exam-output &>/dev/null
-    sudo chmod 777 /tmp/exam-output &>/dev/null
-    sudo podman run -d --name server -p 3000:3000 -v /tmp/exam-output:/usr/src/app/public:Z docker.io/omidiyanto/rhcsa-exam:server
+    sudo docker run -d --name frontend -p 3510:3510 docker.io/omidiyanto/rhcsa-exam:client
+    sudo docker run -d --name backend -p 3000:3000 -v /output:/usr/src/app/public:Z docker.io/omidiyanto/rhcsa-exam:server
     sleep 5
     curl http://localhost:3000
     curl http://localhost:3510
     echo ""
-    echo "EXAM QUESTIONS STARTING COMPLETE "
+    echo "START EXAM QUESTIONS COMPLETE "
 
     # PREPARATION IN WORKSTATION
     declare -A entries=(
