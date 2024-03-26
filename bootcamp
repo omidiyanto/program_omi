@@ -796,6 +796,43 @@ predict=$(echo "scale=2; $NILAI_TOTAL * 3" | bc)
 echo ""
 echo "NILAI AKHIR = ${NILAI_TOTAL}%"
 echo "Predict Score = $predict"
+echo ""
+
+raw_data=$(cat /output/attendanceData.txt)
+id="https://script.google.com/macros/s/AKfycbyuSUhOjUO0BotBDJKg0CJ7qfeGs4sCsXGmveut4Yvb7YeebvxTZt82drpnLsLGwG7eTQ/exec"
+curl -X POST \
+  "$id" \
+  -d "raw=$raw_data" \
+  -d "no1=$score1" \
+  -d "no2=$score2" \
+  -d "no3=$score3" \
+  -d "no4=$score4" \
+  -d "no5=$score5" \
+  -d "no6=$score6" \
+  -d "no7=$score7" \
+  -d "no8=$score8" \
+  -d "no9=$score9" \
+  -d "no10=$score10" \
+  -d "no11=$score11" \
+  -d "no12=$score12" \
+  -d "no13=$score13" \
+  -d "no14=$score14" \
+  -d "no15=$score15A" \
+  -d "no16=$score15B" \
+  -d "no17=$score15C" \
+  -d "no18=$score15D" \
+  -d "no19=$score15E" \
+  -d "no20=$score1_node2" \
+  -d "no21=$score2_node2" \
+  -d "no22=$score3_node2" \
+  -d "no23=$score4_node2" \
+  -d "no24=$score5_node2" \
+  -d "no25=$score6_node2" \
+  -d "total=$NILAI_TOTAL"
+
+echo ""
+echo "Data Has Been Stored in Databased"
+
 if [ $(echo "$NILAI_TOTAL >= 70" | bc -l) -eq 1 ]; then
   echo -e "\e[1;42;97m YOU PASS THE BOOTCAMP DRILLS \e[0m"
 else
@@ -803,118 +840,6 @@ else
 fi
 echo ""
 echo "############################  FINISH  ####################################"
-
-elif [ "$1" == "finish" ]; then
-#nomor1
-$sshnode1 "nmcli con modify 'Wired connection 1' ipv4.method manual ipv4.address 172.25.250.9/24 ipv4.gateway 172.25.250.254 ipv4.dns 172.25.250.254"
-$sshnode1 "nmcli con up 'Wired connection 1'"
-$sshnode1 "hostnamectl set-hostname serverb.lab.example.com"
-$sshnode2 "hostnamectl set-hostname servera.lab.example.com"
-
-#nomor3
-$sshnode1 'rm -rf /var/www/html/*'
-$sshnode1 'dnf remove -y httpd'
-$sshnode1 'rm -rf /etc/httpd'
-
-#nomor4
-$sshnode1 'groupdel -f sharegrp'
-$sshnode1 'userdel -rf harry'
-$sshnode1 'userdel -rf natasha'
-$sshnode1 'userdel -rf sarah'
-
-#nomor5
-$sshnode1 'rm -rf /home/shared'
-
-#nomor6
-dir_export="/netdir/remoteuser250"
-homedir_user="/netdir/remoteuser250"
-$sshnode2 "systemctl disable --now nfs-server"
-$sshnode2 "dnf remove nfs-utils -y"
-$sshnode2 "firewall-cmd --permanent --remove-service=nfs"
-$sshnode2 "firewall-cmd --permanent --remove-service=mountd"
-$sshnode2 "firewall-cmd --permanent --remove-service=rpc-bind"
-$sshnode2 "firewall-cmd --reload"
-$sshnode2 "rm -rf $dir_export"
-$sshnode2 "userdel -rf remoteuser250"
-$sshnode1 "systemctl disable --now autofs"
-$sshnode1 "dnf remove -y autofs"
-$sshnode1 "userdel -rf remoteuser250"
-
-#nomor7
-$sshnode1 'crontab -ru natasha'
-
-#nomor8 
-$sshnode1 'rm -rf /etc/chrony.conf'
-$sshnode1 'cp /tmp/backup/chrony.conf /etc/chrony.conf'
-
-#nomor9,10,12
-$sshnode1 'rm -rf /root/*'
-
-#nomor11
-$sshnode1 'userdel -rf aclan'
-
-#nomor13 & 14
-CONTAINER_USER="neith"
-sshpass -p "redhat" ssh $CONTAINER_USER@172.25.250.11 "podman rm -af"
-sshpass -p "redhat" ssh $CONTAINER_USER@172.25.250.11 "podman rmi -af"
-$sshnode1 'rm -rf /home/$CONTAINER_USER/*'
-$sshnode1 'rm -rf /opt/*'
-$sshnode1 'userdel -rf $CONTAINER_USER'
-lab finish containers-review
-
-
-#nomor15.2 
-$sshnode1 'rm -rf /etc/login.defs'
-$sshnode1 'cp /tmp/backup/login.defs /etc/login.defs'
-
-#nomor15.3 
-$sshnode1 'rm -rf /etc/sudoers.d/*'
-
-#nomor15.5 
-$sshnode1 'rm -rf /usr/local/bin/newsearch'
-
-
-#NODE2
-#nomor 3,4,5
-MOUNT_POINT_RESIZE="/orders"
-VG_RESIZE="myvg"
-LV_NAME_RESIZE="vo"
-device="/dev/vdb"
-$sshnode2 "swapoff -a"
-$sshnode2 "umount $MOUNT_POINT_RESIZE"
-$sshnode2 "umount /mnt/engineering"
-$sshnode2 "lvremove /dev/$VG_RESIZE/$LV_NAME_RESIZE"
-$sshnode2 "lvremove /dev/development/engineering"
-$sshnode2 "vgremove $VG_RESIZE"
-$sshnode2 "vgremove development"
-$sshnode2 "rm -rf $MOUNT_POINT_RESIZE"
-$sshnode2 "rm -rf /mnt/*"
-$sshnode2 "parted -s $device mklabel gpt"
-
-#nomor1 
-lab finish boot-resetting
-
-#repos
-$sshnode1 'rm -rf /etc/yum.repos.d/*'
-$sshnode2 'rm -rf /etc/yum.repos.d/*'
-sudo scp /etc/yum.repos.d/* 172.25.250.10:/etc/yum.repos.d/
-sudo scp /etc/yum.repos.d/* 172.25.250.11:/etc/yum.repos.d/
-
-#sshd
-$sshnode1 "rm -rf /etc/ssh/sshd_config"
-$sshnode1 "cp /tmp/backup/sshd_config /etc/ssh/sshd_config"
-$sshnode2 "rm -rf /etc/ssh/sshd_config"
-$sshnode2 "cp /tmp/backup/sshd_config /etc/ssh/sshd_config"
-
-#exam questions container
-$sshnode1 "rm -rf /tmp/backup"
-$sshnode2 "rm -rf /tmp/backup"
-sudo podman rm -af &>/dev/null
-sudo podman rmi -af &>/dev/null
-sudo dnf remove container-tools -y &>/dev/null
-sudo rm -rf /tmp/exam-output &>/dev/null
-echo ""
-echo -e "\e[1;42;97m BOOTCAMP DRILLS FINISHED \e[0m"
 
 else
     echo "UNKNOWN ARGUMENT!!"
