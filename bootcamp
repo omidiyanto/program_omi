@@ -1,4 +1,6 @@
 #!/bin/bash
+#database oleh omidiyanto7@gmail.com di https://docs.google.com/spreadsheets/d/1zR2-7pCfwzJOfqg8Zv6FajVRSEZN6-D6GdybUovUgMw/edit#gid=0
+
 sshnode1="ssh root@172.25.250.11"
 sshnode2="ssh root@172.25.250.10"
 if [ "$1" == "start" ]; then
